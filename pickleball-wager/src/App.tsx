@@ -33,6 +33,8 @@ export default function App() {
   const { connection } = useConnection();
   const { publicKey, signMessage, sendTransaction } = useWallet();
 
+  const [wager, setWager] = useState(".05");
+
   const [escrow, setEscrow] = useState<Keypair | null>(null);
   const [lobbyCode, setLobbyCode] = useState("");
   const [match, setMatch] = useState<Match | null>(null);
@@ -292,12 +294,14 @@ export default function App() {
   // Deposit to escrow wallet
   const depositToEscrow = async () => {
     if (!publicKey || !escrow) return alert("Connect your wallet first.");
+    const lamports = parseFloat(wager) * LAMPORTS_PER_SOL;
+    if (isNaN(lamports) || lamports <= 0) return alert("Invalid wager amount.");
 
     const tx = new Transaction().add(
       SystemProgram.transfer({
         fromPubkey: publicKey,
         toPubkey: escrow.publicKey,
-        lamports: 0.05 * LAMPORTS_PER_SOL,
+        lamports,
       })
     );
 
@@ -415,9 +419,18 @@ export default function App() {
             </div>
           )}
 
-          <button onClick={depositToEscrow} disabled={loading}>
-            Deposit 0.05 SOL to Escrow
-          </button>
+          <div>
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Wager Amount (SOL)"
+              value={wager}
+              onChange={(e) => setWager(e.target.value)}
+            />
+            <button onClick={depositToEscrow}>
+              Deposit {wager || "?"} SOL
+            </button>
+          </div>
         </div>
       )}
     </div>
